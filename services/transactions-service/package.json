@@ -1,0 +1,9 @@
+{
+  "name": "@mini-bank/transactions-service",
+  "version": "0.0.0",
+  "private": true,
+  "scripts": {
+    "build": "echo \"transactions-service: pendiente de scaffolding en Etapa 6\" && exit 0",
+    "test": "echo \"transactions-service: sin tests todavia\" && exit 0"
+  }
+}

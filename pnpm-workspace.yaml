@@ -1,0 +1,11 @@
+packages:
+  - 'services/*'
+  - 'gateway'
+  - 'libs/*'
+allowBuilds:
+  '@nestjs/core': true
+  '@prisma/client': true
+  '@prisma/engines': true
+  '@scarf/scarf': true
+  bcrypt: true
+  prisma: true

@@ -1,0 +1,56 @@
+name: mini-bank
+
+services:
+  auth-db:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${AUTH_DB_USER}
+      POSTGRES_PASSWORD: ${AUTH_DB_PASSWORD}
+      POSTGRES_DB: ${AUTH_DB_NAME}
+    ports:
+      - '${AUTH_DB_PORT}:5432'
+    volumes:
+      - auth_db_data:/var/lib/postgresql/data
+
+  accounts-db:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${ACCOUNTS_DB_USER}
+      POSTGRES_PASSWORD: ${ACCOUNTS_DB_PASSWORD}
+      POSTGRES_DB: ${ACCOUNTS_DB_NAME}
+    ports:
+      - '${ACCOUNTS_DB_PORT}:5432'
+    volumes:
+      - accounts_db_data:/var/lib/postgresql/data
+
+  transactions-db:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${TRANSACTIONS_DB_USER}
+      POSTGRES_PASSWORD: ${TRANSACTIONS_DB_PASSWORD}
+      POSTGRES_DB: ${TRANSACTIONS_DB_NAME}
+    ports:
+      - '${TRANSACTIONS_DB_PORT}:5432'
+    volumes:
+      - transactions_db_data:/var/lib/postgresql/data
+
+  rabbitmq:
+    image: rabbitmq:3.13-management-alpine
+    restart: unless-stopped
+    environment:
+      RABBITMQ_DEFAULT_USER: ${RABBITMQ_USER}
+      RABBITMQ_DEFAULT_PASS: ${RABBITMQ_PASSWORD}
+    ports:
+      - '${RABBITMQ_PORT}:5672'
+      - '${RABBITMQ_MANAGEMENT_PORT}:15672'
+    volumes:
+      - rabbitmq_data:/var/lib/rabbitmq
+
+volumes:
+  auth_db_data:
+  accounts_db_data:
+  transactions_db_data:
+  rabbitmq_data:

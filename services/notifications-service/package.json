@@ -1,0 +1,9 @@
+{
+  "name": "@mini-bank/notifications-service",
+  "version": "0.0.0",
+  "private": true,
+  "scripts": {
+    "build": "echo \"notifications-service: pendiente de scaffolding en Etapa 8\" && exit 0",
+    "test": "echo \"notifications-service: sin tests todavia\" && exit 0"
+  }
+}
