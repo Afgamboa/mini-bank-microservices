@@ -1,0 +1,9 @@
+{
+  "name": "@mini-bank/gateway",
+  "version": "0.0.0",
+  "private": true,
+  "scripts": {
+    "build": "echo \"gateway: pendiente de scaffolding en Etapa 9\" && exit 0",
+    "test": "echo \"gateway: sin tests todavia\" && exit 0"
+  }
+}

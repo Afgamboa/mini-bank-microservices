@@ -1,0 +1,20 @@
+generator client {
+  provider = "prisma-client-js"
+  output   = "../../generated/prisma-client"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+/// Agregado Account (docs/01-analisis-dominio.md §4): raíz del contexto Accounts.
+/// balance en centavos (entero), nunca negativo (sin sobregiro, ver docs/03-requerimientos.md RF-08).
+model Account {
+  id        String   @id @default(uuid())
+  ownerId   String   @unique
+  balance   Int      @default(0)
+  currency  String
+  status    String   @default("ACTIVE")
+  createdAt DateTime @default(now())
+}
