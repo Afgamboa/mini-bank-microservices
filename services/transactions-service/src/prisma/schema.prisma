@@ -1,0 +1,31 @@
+generator client {
+  provider = "prisma-client-js"
+  output   = "../../generated/prisma-client"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+
+/// Registro de una operación de dinero (y estado de su saga). Los saldos viven en Accounts, no aquí.
+/// type:   DEPOSIT | WITHDRAW | TRANSFER
+/// status: PENDING | COMPLETED | FAILED | COMPENSATION_FAILED   (ver src/domain/transaction.types.ts)
+model Transaction {
+  id             String   @id @default(uuid())
+  accountId      String
+  toAccountId    String?
+  type           String
+  amount         Int
+  currency       String
+  status         String
+  initiatedBy    String
+  idempotencyKey String
+  failureReason  String?
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  @@unique([accountId, type, idempotencyKey])
+  @@index([initiatedBy, createdAt])
+}

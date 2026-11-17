@@ -16,5 +16,18 @@ model Account {
   balance   Int      @default(0)
   currency  String
   status    String   @default("ACTIVE")
+  entries   AccountEntry[]
   createdAt DateTime @default(now())
+}
+
+model AccountEntry {
+  id             String   @id @default(uuid())
+  accountId      String
+  account        Account  @relation(fields: [accountId], references: [id])
+  type           String   // DEBIT | CREDIT
+  amount         Int
+  idempotencyKey String
+  createdAt      DateTime @default(now())
+
+  @@unique([accountId, type, idempotencyKey])
 }

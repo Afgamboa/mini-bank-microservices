@@ -41,12 +41,6 @@ export class AuthService {
       throw new UnauthorizedException('Invalid email or password');
     }
 
-    return this.jwtService.sign({ sub: user.id, email: user.email });
-  }
-
-  async getMe() {
-    // Implement the logic to get the currently authenticated user's information
-    // This is just a placeholder implementation
-    return { message: 'Get me endpoint' };
+    return { accessToken: this.jwtService.sign({ sub: user.id, email: user.email }) };
   }
 }

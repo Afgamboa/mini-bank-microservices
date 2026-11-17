@@ -96,10 +96,16 @@ interface AccountMutationResult {
 
 // Error (409 Conflict, ej. fondos insuficientes)
 interface AccountMutationError {
-  code: 'INSUFFICIENT_FUNDS' | 'ACCOUNT_NOT_FOUND' | 'ACCOUNT_BLOCKED';
+  code: 'INSUFFICIENT_FUNDS' | 'ACCOUNT_NOT_FOUND' | 'ACCOUNT_INACTIVE' | 'CURRENCY_MISMATCH' | 'IDEMPOTENCY_KEY_REUSED';
   message: string;
 }
 ```
+
+Los tipos reales viven en `libs/shared-contracts` y los comparten Accounts y Transactions.
+Todas las rutas internas exigen el header `x-internal-api-key`. Además de débito y crédito,
+Accounts expone `GET /internal/accounts/:accountId` (dueño, moneda, estado) para que Transactions
+valide propiedad y moneda antes de iniciar una saga. Los montos son enteros en unidad mínima
+y el tope por movimiento es `MAX_MOVEMENT_AMOUNT` (el saldo es `Int` de Postgres).
 
 `reference` es clave: es el `transactionId` generado por `Transactions`, y
 `Accounts` lo debe usar como clave de idempotencia (no aplicar dos veces el
@@ -112,24 +118,48 @@ respeten desde el día uno.
 Formato base (todo evento lo cumple, tipo "envelope"):
 
 ```ts
-interface DomainEvent<T> {
-  eventId: string; // UUID, único por publicación
-  eventType: string; // ej. "AccountOpened"
+interface DomainEvent<N extends EventName = EventName> {
+  eventId: string; // UUID, único por publicación (clave de idempotencia del consumidor)
+  eventType: N; // ej. "AccountOpened"
   occurredAt: string; // ISO 8601
-  payload: T;
+  payload: EventPayloadMap[N]; // el payload queda ligado al nombre del evento
 }
 ```
 
-Eventos previstos (payloads mínimos, se refinan en Etapa 7):
+Eventos (payloads en `libs/shared-contracts/src/events.ts`). Los marcados como publicados son los que
+existen hoy; los demás están definidos en el contrato pero ningún servicio los emite todavía:
 
-| Evento              | Publicador   | Payload clave                                                   |
-| ------------------- | ------------ | --------------------------------------------------------------- |
-| `UserRegistered`    | Auth         | `{ userId, email }`                                             |
-| `AccountOpened`     | Accounts     | `{ accountId, ownerId, currency }`                              |
-| `MoneyDeposited`    | Accounts     | `{ accountId, amount, balanceAfter }`                           |
-| `MoneyWithdrawn`    | Accounts     | `{ accountId, amount, balanceAfter }`                           |
-| `TransferCompleted` | Transactions | `{ transactionId, fromAccountId, toAccountId, amount }`         |
-| `TransferFailed`    | Transactions | `{ transactionId, fromAccountId, toAccountId, amount, reason }` |
+| Evento              | Publicador   | Payload clave                                                                | Estado      |
+| ------------------- | ------------ | ---------------------------------------------------------------------------- | ----------- |
+| `UserRegistered`    | Auth         | `{ userId, email }`                                                          | sin publicar |
+| `AccountOpened`     | Accounts     | `{ accountId, ownerId, currency }`                                           | publicado   |
+| `MoneyDeposited`    | Accounts     | `{ accountId, amount, balanceAfter }`                                        | sin publicar |
+| `MoneyWithdrawn`    | Accounts     | `{ accountId, amount, balanceAfter }`                                        | sin publicar |
+| `TransferCompleted` | Transactions | `{ transactionId, fromAccountId, toAccountId, amount, currency, initiatedBy }` | publicado   |
+| `TransferFailed`    | Transactions | igual que `TransferCompleted` + `reason`                                     | publicado   |
+
+### 3.3 Saga de transferencia (Transactions)
+
+Orquestación dentro de Transactions (`src/saga`): `debit-source` (con compensación: crédito de
+reembolso con `reference = <txId>:refund`) y luego `credit-destination`.
+
+- **Rechazo firme (4xx de Accounts):** se compensan los pasos previos y la transacción queda `FAILED`.
+- **Resultado desconocido (5xx, timeout, circuito abierto):** NO se compensa, porque reembolsar un
+  débito que quizá nunca ocurrió crearía dinero. La transacción sigue `PENDING`.
+- **Falla la compensación:** estado `COMPENSATION_FAILED`.
+- `PENDING` y `COMPENSATION_FAILED` se **reanudan** cuando el cliente repite la petición con el mismo
+  `Idempotency-Key`; es seguro porque cada paso es idempotente por `reference` en Accounts.
+  Un job de reconciliación para transacciones atascadas queda fuera de alcance.
+
+### 3.4 Mensajería (RabbitMQ)
+
+- Cola única `notifications.events`, durable, con dead-letter queue `notifications.events.dlq`.
+- El publicador (`libs/messaging`) nunca lanza: un broker caído se registra en el log y no rompe la
+  operación ya completada. No hay outbox, así que si el proceso muere entre el commit y la publicación
+  el evento se pierde (riesgo de _dual write_ aceptado en v1).
+- El consumidor confirma (ack) al terminar; el primer fallo reencola, el segundo va a la DLQ.
+- Idempotencia del consumidor por `eventId`; el almacén es en memoria (se pierde al reiniciar) detrás de
+  la interfaz `ProcessedEventsStore`, lista para cambiarse por una tabla.
 
 ## 4. Estrategia de datos
 

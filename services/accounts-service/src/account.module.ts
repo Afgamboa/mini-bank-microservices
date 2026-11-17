@@ -1,8 +1,10 @@
 import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
 import { JwtAuthModule } from '@mini-bank/auth-shared';
+import { MessagingModule } from '@mini-bank/messaging';
 import { PrismaModule } from './prisma/prisma.module';
 import { AccountController } from './controllers/account.controller';
+import { InternalAccountController } from './controllers/internal.account.controller';
 import { AccountService } from './services/account.service';
 
 @Module({
@@ -11,14 +13,11 @@ import { AccountService } from './services/account.service';
       isGlobal: true,
       envFilePath: '.env',
     }),
-   JwtAuthModule,
-   PrismaModule,
+    JwtAuthModule,
+    PrismaModule,
+    MessagingModule.register(),
   ],
-  controllers: [
-    AccountController,
-  ],
-  providers: [
-    AccountService,
-  ],
+  controllers: [AccountController, InternalAccountController],
+  providers: [AccountService],
 })
 export class AppModule {}
