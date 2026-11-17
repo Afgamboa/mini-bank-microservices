@@ -14,21 +14,22 @@ funcione", sino entender **por qué** se toma cada decisión.
       base con Postgres x N + RabbitMQ.
 - [x] **Etapa 4 — Servicio Auth**: registro/login, JWT, hashing de passwords,
       guards, patrón "database per service".
-- [ ] **Etapa 5 — Servicio Accounts**: apertura de cuentas, saldo,
+- [x] **Etapa 5 — Servicio Accounts**: apertura de cuentas, saldo,
       consistencia transaccional dentro del propio servicio.
-- [ ] **Etapa 6 — Servicio Transactions**: transferencias, depósitos,
+- [x] **Etapa 6 — Servicio Transactions**: transferencias, depósitos,
       retiros; **saga/orquestación** para consistencia entre servicios
       (sin transacciones distribuidas ACID).
-- [ ] **Etapa 7 — Comunicación asíncrona (RabbitMQ)**: contratos de eventos,
+- [x] **Etapa 7 — Comunicación asíncrona (RabbitMQ)**: contratos de eventos,
       publishers/consumers con `@nestjs/microservices`, idempotencia,
       manejo de fallos (retry, dead-letter queue).
-- [ ] **Etapa 8 — Servicio Notifications**: consumidor puro de eventos,
+- [x] **Etapa 8 — Servicio Notifications**: consumidor puro de eventos,
       patrón fire-and-forget.
-- [ ] **Etapa 9 — API Gateway**: BFF en NestJS, agregación de respuestas,
+- [x] **Etapa 9 — API Gateway**: BFF en NestJS, agregación de respuestas,
       autenticación centralizada, rate limiting.
 - [ ] **Etapa 10 — Testing**: unit tests, tests de integración con
       Testcontainers, e2e del flujo completo (transferencia entre cuentas).
-- [ ] **Etapa 11 — Observabilidad**: logging estructurado, correlation IDs,
+      _Avance: unit tests de libs, Accounts, Transactions (saga) y Notifications.
+      Faltan integración con Testcontainers y e2e._- [ ] **Etapa 11 — Observabilidad**: logging estructurado, correlation IDs,
       health checks, métricas básicas (Prometheus), tracing (OpenTelemetry).
 - [ ] **Etapa 12 — Dockerización completa**: Dockerfiles multi-stage,
       `docker-compose` para todo el sistema, variables de entorno y secretos.
